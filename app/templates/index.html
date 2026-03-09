@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TradingJournal</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <main>
+    <h1>TradingJournal</h1>
+    <p>Konfiguriere Plattformen (z. B. Capital.com), synchronisiere Trades und analysiere dein PnL.</p>
+
+    <section>
+      <h2>Plattform hinzufügen</h2>
+      <form id="platform-form">
+        <input name="name" placeholder="Name (z. B. Capital Demo)" required />
+        <select name="platform_type">
+          <option value="capital_com">capital_com</option>
+          <option value="generic_rest">generic_rest (coming soon)</option>
+        </select>
+        <input name="api_key" placeholder="API Key" />
+        <input name="identifier" placeholder="Identifier / Login" />
+        <input name="password" type="password" placeholder="Passwort" />
+        <label><input name="demo_mode" type="checkbox" checked /> Demo-Modus</label>
+        <button type="submit">Speichern</button>
+      </form>
+      <p id="status"></p>
+    </section>
+
+    <section>
+      <h2>Plattformen</h2>
+      <ul id="platform-list"></ul>
+    </section>
+
+    <section>
+      <h2>Trades</h2>
+      <table>
+        <thead>
+          <tr><th>Symbol</th><th>Richtung</th><th>Menge</th><th>Entry</th><th>Exit</th><th>PnL</th><th>Closed</th></tr>
+        </thead>
+        <tbody id="trade-body"></tbody>
+      </table>
+    </section>
+  </main>
+  <script src="/static/app.js"></script>
+</body>
+</html>
