@@ -11,16 +11,22 @@ Ein schlankes Trading-Journal mit FastAPI, das:
 curl -fsSL https://raw.githubusercontent.com/thegolfer77/TradingJournal/main/scripts/install.sh | bash
 ```
 
-Starten:
+## Starten (3 Befehle)
 ```bash
-cd TradingJournal
+cd ~/TradingJournal
 source .venv/bin/activate
-make run
+bash scripts/run.sh
 ```
 
 Öffnen: `http://127.0.0.1:8000`
 
 ---
+
+## Wenn `make run` fehlschlägt
+Nutze stattdessen immer:
+```bash
+bash scripts/run.sh
+```
 
 ## Warum bei dir Fehler kamen (`requirements.txt` fehlt, `No module named app`)
 Das bedeutet fast immer: Du bist **nicht im richtigen Projektstand/Branch** oder in einem falschen Ordner.
@@ -41,7 +47,7 @@ git checkout main
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-make run
+bash scripts/run.sh
 ```
 
 ## Alternativ: Docker

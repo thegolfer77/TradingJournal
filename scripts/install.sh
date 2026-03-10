@@ -32,8 +32,8 @@ else
   echo "[WARN] Branch '$BRANCH' nicht gefunden, nutze aktuellen Branch: $(git rev-parse --abbrev-ref HEAD)"
 fi
 
-if [ ! -f requirements.txt ] || [ ! -f Makefile ] || [ ! -d app ]; then
-  echo "[ERROR] Projektdateien fehlen (requirements.txt/Makefile/app)."
+if [ ! -f requirements.txt ] || [ ! -d app ] || [ ! -f scripts/run.sh ]; then
+  echo "[ERROR] Projektdateien fehlen (requirements.txt/app/scripts/run.sh)."
   echo "[HINWEIS] Prüfe Repo-URL und Branch."
   echo "[DEBUG] Aktueller Commit: $(git rev-parse --short HEAD)"
   exit 1
@@ -48,4 +48,4 @@ echo "[OK] Installation fertig."
 echo "[NEXT] Starten mit:"
 echo "  cd $TARGET_DIR"
 echo "  source .venv/bin/activate"
-echo "  make run"
+echo "  bash scripts/run.sh"
