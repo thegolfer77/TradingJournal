@@ -5,10 +5,10 @@ Ein schlankes Trading-Journal mit FastAPI, das:
 - Trades aus Capital.com synchronisieren kann,
 - und eine einfache Web-Oberfläche für Sync + Übersicht bereitstellt.
 
-## TL;DR – in einem Befehl installieren
+## TL;DR – in einem Befehl installieren (ohne Raw-URL)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/thegolfer77/TradingJournal/main/scripts/install.sh | bash
+git clone https://github.com/thegolfer77/TradingJournal.git && cd TradingJournal && bash scripts/install.sh
 ```
 
 ## Starten (3 Befehle)
@@ -21,6 +21,10 @@ bash scripts/run.sh
 Öffnen: `http://127.0.0.1:8000`
 
 ---
+
+## Warum bei dir `curl ... install.sh` mit 404 endete
+Die alte Raw-URL war auf einen festen Branch (`main`) verdrahtet. Wenn der Branch anders heißt, kommt 404.
+Darum ist der neue empfohlene Weg: **clone + lokales Script starten** (oben), branch-unabhängig.
 
 ## Wenn `make run` fehlschlägt
 Nutze stattdessen immer:
@@ -43,7 +47,6 @@ cd ~
 rm -rf TradingJournal
 git clone https://github.com/thegolfer77/TradingJournal.git
 cd TradingJournal
-git checkout main
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt

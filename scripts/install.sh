@@ -3,7 +3,7 @@ set -euo pipefail
 
 REPO_URL="${1:-https://github.com/thegolfer77/TradingJournal.git}"
 TARGET_DIR="${2:-TradingJournal}"
-BRANCH="${3:-main}"
+BRANCH="${3:-}"
 
 require_cmd() {
   if ! command -v "$1" >/dev/null 2>&1; then
@@ -25,11 +25,17 @@ fi
 
 cd "$TARGET_DIR"
 
-if git show-ref --verify --quiet "refs/remotes/origin/$BRANCH"; then
-  git checkout "$BRANCH"
-  git pull --ff-only origin "$BRANCH"
+if [ -n "$BRANCH" ]; then
+  if git show-ref --verify --quiet "refs/remotes/origin/$BRANCH"; then
+    git checkout "$BRANCH"
+    git pull --ff-only origin "$BRANCH"
+  else
+    echo "[WARN] Branch '$BRANCH' nicht gefunden, nutze aktuellen Branch: $(git rev-parse --abbrev-ref HEAD)"
+  fi
 else
-  echo "[WARN] Branch '$BRANCH' nicht gefunden, nutze aktuellen Branch: $(git rev-parse --abbrev-ref HEAD)"
+  CURRENT_BRANCH="$(git rev-parse --abbrev-ref HEAD)"
+  echo "[INFO] Nutze Standard-Branch: $CURRENT_BRANCH"
+  git pull --ff-only origin "$CURRENT_BRANCH" || true
 fi
 
 if [ ! -f requirements.txt ] || [ ! -d app ] || [ ! -f scripts/run.sh ]; then
