@@ -1,28 +1,43 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-REPO_URL="${1:-https://github.com/REPLACE_ME/TradingJournal.git}"
+REPO_URL="${1:-https://github.com/thegolfer77/TradingJournal.git}"
 TARGET_DIR="${2:-TradingJournal}"
+BRANCH="${3:-main}"
 
-if ! command -v git >/dev/null 2>&1; then
-  echo "[ERROR] git ist nicht installiert."
-  exit 1
-fi
+require_cmd() {
+  if ! command -v "$1" >/dev/null 2>&1; then
+    echo "[ERROR] '$1' ist nicht installiert."
+    exit 1
+  fi
+}
 
-if ! command -v python3 >/dev/null 2>&1; then
-  echo "[ERROR] python3 ist nicht installiert."
-  exit 1
-fi
+require_cmd git
+require_cmd python3
 
 if [ -d "$TARGET_DIR/.git" ]; then
-  echo "[INFO] Repository existiert bereits unter '$TARGET_DIR' – pull wird ausgeführt"
-  git -C "$TARGET_DIR" pull
+  echo "[INFO] Repository existiert bereits unter '$TARGET_DIR' – update wird ausgeführt"
+  git -C "$TARGET_DIR" fetch --all --tags
 else
   echo "[INFO] Klone $REPO_URL nach $TARGET_DIR"
   git clone "$REPO_URL" "$TARGET_DIR"
 fi
 
 cd "$TARGET_DIR"
+
+if git show-ref --verify --quiet "refs/remotes/origin/$BRANCH"; then
+  git checkout "$BRANCH"
+  git pull --ff-only origin "$BRANCH"
+else
+  echo "[WARN] Branch '$BRANCH' nicht gefunden, nutze aktuellen Branch: $(git rev-parse --abbrev-ref HEAD)"
+fi
+
+if [ ! -f requirements.txt ] || [ ! -f Makefile ] || [ ! -d app ]; then
+  echo "[ERROR] Projektdateien fehlen (requirements.txt/Makefile/app)."
+  echo "[HINWEIS] Prüfe Repo-URL und Branch."
+  echo "[DEBUG] Aktueller Commit: $(git rev-parse --short HEAD)"
+  exit 1
+fi
 
 python3 -m venv .venv
 . .venv/bin/activate
@@ -33,4 +48,4 @@ echo "[OK] Installation fertig."
 echo "[NEXT] Starten mit:"
 echo "  cd $TARGET_DIR"
 echo "  source .venv/bin/activate"
-echo "  uvicorn app.main:app --host 0.0.0.0 --port 8000"
+echo "  make run"
