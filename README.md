@@ -5,43 +5,36 @@ Ein schlankes Trading-Journal mit FastAPI, das:
 - Trades aus Capital.com synchronisieren kann,
 - und eine einfache Web-Oberfläche für Sync + Übersicht bereitstellt.
 
-## TL;DR – robust installieren
+## TL;DR – funktioniert auch ohne `install.sh`
 
 ```bash
 git clone https://github.com/thegolfer77/TradingJournal.git
 cd TradingJournal
-bash install.sh
-```
-
-## Starten (3 Befehle)
-```bash
-cd ~/TradingJournal
+python3 -m venv .venv
 source .venv/bin/activate
-bash run.sh
+pip install -r requirements.txt
+uvicorn app.main:app --reload
 ```
 
 Öffnen: `http://127.0.0.1:8000`
 
+## Komfort-Variante (wenn vorhanden)
+```bash
+bash install.sh
+bash run.sh
+```
+
 ---
 
-## Warum bei dir `scripts/install.sh`/`scripts/run.sh` fehlten
-Du warst auf einem Stand/Branch, in dem `scripts/` nicht vorhanden war.
-Darum gibt es jetzt **Root-Fallbacks** (`install.sh`, `run.sh`, `doctor.sh`), die auch ohne `scripts/` funktionieren.
+## Wenn `install.sh` fehlt
+Dann bist du auf einem älteren Stand ohne Root-Skripte. Nutze einfach den manuellen Weg oben (python venv + pip + uvicorn).
 
 ## Diagnose
 ```bash
 cd ~/TradingJournal
-bash doctor.sh
-```
-
-## Falls weiterhin etwas fehlt
-```bash
-cd ~
-rm -rf TradingJournal
-git clone https://github.com/thegolfer77/TradingJournal.git
-cd TradingJournal
-bash install.sh
-bash run.sh
+[ -f install.sh ] && echo "install.sh vorhanden" || echo "install.sh fehlt"
+[ -f requirements.txt ] && echo "requirements.txt vorhanden" || echo "requirements.txt fehlt"
+[ -d app ] && echo "app/ vorhanden" || echo "app/ fehlt"
 ```
 
 ## Alternativ: Docker
