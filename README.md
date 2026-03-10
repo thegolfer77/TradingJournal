@@ -5,44 +5,44 @@ Ein schlankes Trading-Journal mit FastAPI, das:
 - Trades aus Capital.com synchronisieren kann,
 - und eine einfache Web-Oberfläche für Sync + Übersicht bereitstellt.
 
-## Schnellstart (robust)
+## Schnellstart (normal)
 
 ```bash
 git clone https://github.com/thegolfer77/TradingJournal.git
 cd TradingJournal
-bash install.sh
-bash run.sh
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+uvicorn app.main:app --reload
 ```
 
 Öffnen: `http://127.0.0.1:8000`
 
-## Wenn bei dir steht: `requirements.txt: No such file or directory`
-Das heißt: Du bist in einem falschen Ordner/Branch-Stand.
+## Wenn bei dir steht: `requirements.txt` / `install.sh` / `run.sh` fehlt
+Dann ist sehr wahrscheinlich ein falscher Branch ausgecheckt.
 
-Prüfen:
+### 1) Auto-Recovery ausführen
 ```bash
-pwd
-ls
-bash doctor.sh
+cd ~/TradingJournal
+bash recover.sh
 ```
 
-Neu und sauber starten:
-```bash
-cd ~
-rm -rf TradingJournal
-git clone https://github.com/thegolfer77/TradingJournal.git
-cd TradingJournal
-bash install.sh
-bash run.sh
-```
-
-## Manueller Fallback ohne Scripts
+### 2) Danach normal installieren
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 uvicorn app.main:app --reload
 ```
+
+## Manuelle Diagnose
+```bash
+cd ~/TradingJournal
+git branch -a
+git rev-parse --abbrev-ref HEAD
+git ls-tree --name-only HEAD
+```
+Wenn dort weder `requirements.txt` noch `app/` auftaucht, ist der falsche Branch aktiv.
 
 ## Alternativ: Docker
 ```bash
