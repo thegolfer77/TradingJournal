@@ -1,7 +1,8 @@
 from sqlmodel import Session, select
 
 from app.models import PlatformConfig, Trade
-from app.services.capital_api import CapitalComClient, normalize_capital_trades
+from app.services.capital_api import CapitalComClient
+from app.services.normalize import normalize_capital_trades
 
 
 async def sync_platform_trades(session: Session, platform: PlatformConfig) -> tuple[int, int]:

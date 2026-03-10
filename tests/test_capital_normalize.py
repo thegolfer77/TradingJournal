@@ -1,4 +1,4 @@
-from app.services.capital_api import normalize_capital_trades
+from app.services.normalize import normalize_capital_trades
 
 
 def test_normalize_capital_trades_maps_fields():
