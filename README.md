@@ -5,6 +5,27 @@ Ein schlankes Trading-Journal mit FastAPI, das:
 - Trades aus Capital.com synchronisieren kann,
 - und eine einfache Web-Oberfläche für Sync + Übersicht bereitstellt.
 
+## TL;DR – möglichst einfach installieren
+
+### Option A: One-Command Installer (nachdem du dieses Repo auf GitHub gepusht hast)
+```bash
+curl -fsSL https://raw.githubusercontent.com/<USER>/<REPO>/main/scripts/install.sh | bash -s -- https://github.com/<USER>/<REPO>.git TradingJournal
+```
+
+Danach:
+```bash
+cd TradingJournal
+source .venv/bin/activate
+uvicorn app.main:app --host 0.0.0.0 --port 8000
+```
+
+### Option B: Docker (nur Docker nötig)
+```bash
+docker compose up --build
+```
+
+Öffnen: `http://127.0.0.1:8000`
+
 ## Features
 - **Plattform-Management**: mehrere Konten/Plattformen konfigurierbar.
 - **Capital.com Integration**: Login via `API Key + Identifier + Passwort`, Import von geschlossenen Positionen.
@@ -57,6 +78,19 @@ docker compose up --build
 Danach öffnen:
 - UI: `http://127.0.0.1:8000`
 - API-Doku: `http://127.0.0.1:8000/docs`
+
+## GitHub-Setup für „fertig installieren“
+Wenn du möchtest, dass andere nur noch „installieren“ müssen:
+1. Repo auf GitHub pushen.
+2. In `scripts/install.sh` den Default-Repo-Link anpassen (optional).
+3. Optional Tag erstellen (`v0.1.0`) und pushen, damit `docker-publish.yml` ein GHCR-Image baut.
+4. Dann können Nutzer entweder:
+   - per Installer-Script installieren, oder
+   - das fertige Container-Image nutzen.
+
+Die Workflows liegen unter:
+- `.github/workflows/ci.yml`
+- `.github/workflows/docker-publish.yml`
 
 ## So benutzt du das Journal
 1. Öffne die Startseite.
