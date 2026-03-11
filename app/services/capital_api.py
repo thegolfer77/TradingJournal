@@ -253,12 +253,32 @@ class CapitalComClient:
     async def fetch_open_positions(self, limit: int = 200) -> list[OpenPosition]:
         headers = await self._auth_headers()
         try:
-            payload = await self._get("/positions", headers, {"status": "OPEN", "limit": limit})
-            rows = payload.get("positions", payload if isinstance(payload, list) else [])
+            endpoints = [
+                ("/positions", {"status": "OPEN", "limit": limit, "max": limit, "pageSize": limit}),
+                ("/positions", {"limit": limit, "max": limit, "pageSize": limit}),
+            ]
+
+            rows: list[dict[str, Any]] = []
+            for path, params in endpoints:
+                rows.extend(await self._collect_paginated(path, headers, params, max_pages=10))
+
             result: list[OpenPosition] = []
+            seen_ids: set[str] = set()
             for row in rows:
                 position = row.get("position", row)
+                status = str(position.get("status") or row.get("status") or "").upper()
+                if status and status not in {"OPEN", "OPENED", "ACTIVE"}:
+                    continue
+
                 market = row.get("market", {})
+                position_id = str(position.get("dealId") or position.get("dealReference") or "")
+                if not position_id:
+                    position_id = f"OPEN-{str(position.get('epic') or row.get('epic') or 'UNKNOWN')}-{str(position.get('openDate') or position.get('createdDate') or row.get('date') or '')}"
+
+                if position_id in seen_ids:
+                    continue
+                seen_ids.add(position_id)
+
                 current_price = _num(
                     market.get("bid"),
                     market.get("offer"),
@@ -279,7 +299,7 @@ class CapitalComClient:
                 )
                 result.append(
                     OpenPosition(
-                        position_id=str(position.get("dealId") or position.get("dealReference") or ""),
+                        position_id=position_id,
                         symbol=str(market.get("epic") or position.get("epic") or "UNKNOWN"),
                         direction=str(position.get("direction") or "UNKNOWN").upper(),
                         quantity=_num(position.get("size"), position.get("quantity")),
