@@ -29,6 +29,7 @@ async function fetchPlatforms() {
       }
       const hint = (syncData.fetched > 0 && syncData.normalized === 0) ? " | Hinweis: History gefunden, aber kein Datensatz als CLOSED erkannt." : "";
       statusEl.innerText = `Closed Sync: fetched=${syncData.fetched}, normalized=${syncData.normalized}, importiert=${syncData.imported}, übersprungen=${syncData.skipped}${hint}`;
+      console.log("sync-debug", syncData);
       await fetchTrades();
       await fetchStats(selectedPeriod);
       syncBtn.disabled = false;

@@ -15,9 +15,8 @@ python -m uvicorn app.main:app --reload
 1. Plattform hinzufügen
 2. `platform_type = capital_com`
 3. API Key + Identifier + Passwort eintragen
-4. **Demo-Modus deaktivieren** (wichtig für Live)
-5. Optional `api_base_url` setzen
-6. Sync-Button klicken (importiert geschlossene Trades)
+4. Optional `api_base_url` setzen
+5. Sync-Button klicken (importiert geschlossene Trades)
 
 ## Fehler 401 / 429 beim Sync
 - **401**: Zugangsdaten passen nicht zum Modus (Demo vs Live), API-Key nicht für dieses Konto freigeschaltet, Identifier/Passwort falsch oder Session-Scope nicht korrekt.
@@ -71,3 +70,8 @@ Hinweis: `closeLevel` allein zählt nicht mehr als geschlossener Trade (weil off
 - `fetched=0`: Konto liefert keine Historie über verfügbare Endpoints.
 - `fetched>0`, `normalized=0`: Es kommen nur offene/irrelevante Events zurück.
 - Offene Positionen siehst du separat über `Load Open ...` bzw. `GET /api/platforms/{id}/open-positions`.
+
+
+## UI wirkt unverändert?
+- Browser-Cache leeren / Hard-Refresh (`Cmd+Shift+R` oder `Ctrl+F5`).
+- Danach sollte im Titel `v2026.03-live` sichtbar sein.

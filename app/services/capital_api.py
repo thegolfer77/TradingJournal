@@ -159,23 +159,45 @@ class CapitalComClient:
         walk(payload)
         return rows
 
+
+    async def _collect_paginated(self, path: str, headers: dict[str, str], base_params: dict[str, Any], max_pages: int = 15) -> list[dict[str, Any]]:
+        rows: list[dict[str, Any]] = []
+        for page in range(1, max_pages + 1):
+            params = dict(base_params)
+            params.setdefault("pageNumber", page)
+            payload = await self._try_get(path, headers, params)
+            if not payload:
+                break
+            page_rows = self._extract_rows(payload)
+            if not page_rows:
+                break
+            rows.extend(page_rows)
+
+            # Stop if payload exposes paging meta and says last page.
+            if isinstance(payload, dict):
+                meta = payload.get("metadata") or payload.get("paging") or {}
+                if isinstance(meta, dict):
+                    total_pages = meta.get("totalPages") or meta.get("pageCount")
+                    if isinstance(total_pages, int) and page >= total_pages:
+                        break
+        return rows
+
     async def fetch_closed_positions(self, limit: int = 1000) -> list[dict[str, Any]]:
         headers = await self._auth_headers()
         try:
-            sources: list[Any] = []
-            sources.append(await self._try_get("/positions", headers, {"status": "CLOSED", "limit": limit}))
-            sources.append(await self._try_get("/history/positions", headers, {"limit": limit}))
-            sources.append(await self._try_get("/history/transactions", headers, {"limit": limit}))
-            sources.append(await self._try_get("/history/activity", headers, {"limit": limit}))
-            sources.append(await self._try_get("/history/deals", headers, {"limit": limit}))
-            sources.append(await self._try_get("/history", headers, {"limit": limit}))
-            sources.append(await self._try_get("/history/activities", headers, {"limit": limit}))
+            endpoints = [
+                ("/positions", {"status": "CLOSED", "limit": limit, "max": limit, "pageSize": limit}),
+                ("/history/positions", {"limit": limit, "max": limit, "pageSize": limit}),
+                ("/history/transactions", {"limit": limit, "max": limit, "pageSize": limit}),
+                ("/history/activity", {"limit": limit, "max": limit, "pageSize": limit}),
+                ("/history/deals", {"limit": limit, "max": limit, "pageSize": limit}),
+                ("/history", {"limit": limit, "max": limit, "pageSize": limit}),
+                ("/history/activities", {"limit": limit, "max": limit, "pageSize": limit}),
+            ]
 
             rows: list[dict[str, Any]] = []
-            for payload in sources:
-                if not payload:
-                    continue
-                rows.extend(self._extract_rows(payload))
+            for path, params in endpoints:
+                rows.extend(await self._collect_paginated(path, headers, params))
 
             unique_rows: list[dict[str, Any]] = []
             seen: set[str] = set()
