@@ -1,50 +1,33 @@
 # TradingJournal (Capital.com + Multi-Plattform vorbereitet)
 
-Ein schlankes Trading-Journal mit FastAPI, das:
-- Plattform-Konfigurationen speichert (z. B. `capital_com`),
-- Trades aus Capital.com synchronisieren kann,
-- und eine einfache Web-Oberfläche für Sync + Übersicht bereitstellt.
-
-## Schnellstart (normal)
-
+## Start
 ```bash
 git clone https://github.com/thegolfer77/TradingJournal.git
 cd TradingJournal
+git checkout -B codex/erstelle-tradingjournal-mit-api-zugriff origin/codex/erstelle-tradingjournal-mit-api-zugriff
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 python -m uvicorn app.main:app --reload
 ```
 
-Öffnen: `http://127.0.0.1:8000`
+## Live-Konto synchronisieren (Capital.com)
+1. Plattform hinzufügen
+2. `platform_type = capital_com`
+3. API Key + Identifier + Passwort eintragen
+4. **Demo-Modus deaktivieren** (wichtig für Live)
+5. Optional `api_base_url` setzen
+6. Sync-Button klicken
 
-## Wenn bei dir steht: `requirements.txt` / `install.sh` / `run.sh` fehlt
-Dann ist sehr wahrscheinlich ein falscher Branch ausgecheckt.
+## Neue Auswertungen
+- Kalenderansicht mit Tages-/Monats-/Jahresaggregation
+- Gewinn in Geld
+- Gewinn in %
+- Anzahl Trades
+- % Gewinntrades
+- Profit Faktor
 
-### 1) Auto-Recovery ausführen
-```bash
-cd ~/TradingJournal
-bash recover.sh
-```
-
-### 2) Danach normal installieren
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-python -m uvicorn app.main:app --reload
-```
-
-## Manuelle Diagnose
-```bash
-cd ~/TradingJournal
-git branch -a
-git rev-parse --abbrev-ref HEAD
-git ls-tree --name-only HEAD
-```
-Wenn dort weder `requirements.txt` noch `app/` auftaucht, ist der falsche Branch aktiv.
-
-## Alternativ: Docker
-```bash
-docker compose up --build
-```
+## API
+- `GET /api/stats?period=day|month|year`
+- `POST /api/platforms/{id}/sync`
+- `GET /api/trades`

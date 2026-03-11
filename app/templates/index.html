@@ -9,16 +9,17 @@
 <body>
   <main>
     <h1>TradingJournal</h1>
-    <p>Konfiguriere Plattformen (z. B. Capital.com), synchronisiere Trades und analysiere dein PnL.</p>
+    <p>Für Live-Konto bei Capital.com: Demo-Modus deaktivieren.</p>
 
     <section>
       <h2>Plattform hinzufügen</h2>
       <form id="platform-form">
-        <input name="name" placeholder="Name (z. B. Capital Demo)" required />
+        <input name="name" placeholder="Name (z. B. Capital Live)" required />
         <select name="platform_type">
           <option value="capital_com">capital_com</option>
           <option value="generic_rest">generic_rest (coming soon)</option>
         </select>
+        <input name="api_base_url" placeholder="Optional API Base URL" />
         <input name="api_key" placeholder="API Key" />
         <input name="identifier" placeholder="Identifier / Login" />
         <input name="password" type="password" placeholder="Passwort" />
@@ -31,6 +32,24 @@
     <section>
       <h2>Plattformen</h2>
       <ul id="platform-list"></ul>
+    </section>
+
+    <section>
+      <h2>Performance Kalender & KPIs</h2>
+      <div>
+        <button id="period-day">Tag</button>
+        <button id="period-month">Monat</button>
+        <button id="period-year">Jahr</button>
+      </div>
+      <div id="calendar" class="calendar"></div>
+      <table>
+        <thead>
+          <tr>
+            <th>Zeitraum</th><th>Gewinn €</th><th>Gewinn %</th><th>Trades</th><th>% Gewinntrades</th><th>Profit Faktor</th>
+          </tr>
+        </thead>
+        <tbody id="stats-body"></tbody>
+      </table>
     </section>
 
     <section>

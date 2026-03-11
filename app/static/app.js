@@ -1,6 +1,9 @@
 const statusEl = document.getElementById('status');
 const platformList = document.getElementById('platform-list');
 const tradeBody = document.getElementById('trade-body');
+const statsBody = document.getElementById('stats-body');
+const calendar = document.getElementById('calendar');
+let selectedPeriod = 'day';
 
 async function fetchPlatforms() {
   const res = await fetch('/api/platforms');
@@ -20,8 +23,9 @@ async function fetchPlatforms() {
       }
       statusEl.innerText = `Sync: ${syncData.imported} importiert, ${syncData.skipped} übersprungen`;
       await fetchTrades();
+      await fetchStats(selectedPeriod);
     };
-    li.innerText = `${p.name} (${p.platform_type}) `;
+    li.innerText = `${p.name} (${p.platform_type}, ${p.demo_mode ? 'Demo' : 'Live'}) `;
     li.appendChild(btn);
     platformList.appendChild(li);
   });
@@ -38,12 +42,36 @@ async function fetchTrades() {
   });
 }
 
+async function fetchStats(period) {
+  selectedPeriod = period;
+  const res = await fetch(`/api/stats?period=${period}`);
+  const data = await res.json();
+  statsBody.innerHTML = '';
+  calendar.innerHTML = '';
+
+  data.forEach((s) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${s.period}</td><td>${s.pnl_money}</td><td>${s.pnl_percent}</td><td>${s.trades}</td><td>${s.winrate_percent}</td><td>${s.profit_factor}</td>`;
+    statsBody.appendChild(tr);
+
+    const card = document.createElement('div');
+    card.className = `cell ${s.pnl_money >= 0 ? 'pos' : 'neg'}`;
+    card.innerHTML = `<strong>${s.period}</strong><br/>${s.pnl_money} €`;
+    calendar.appendChild(card);
+  });
+}
+
+document.getElementById('period-day').onclick = () => fetchStats('day');
+document.getElementById('period-month').onclick = () => fetchStats('month');
+document.getElementById('period-year').onclick = () => fetchStats('year');
+
 document.getElementById('platform-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   const formData = new FormData(e.target);
   const payload = {
     name: formData.get('name'),
     platform_type: formData.get('platform_type'),
+    api_base_url: formData.get('api_base_url') || null,
     api_key: formData.get('api_key') || null,
     identifier: formData.get('identifier') || null,
     password: formData.get('password') || null,
@@ -69,3 +97,4 @@ document.getElementById('platform-form').addEventListener('submit', async (e) =>
 
 fetchPlatforms();
 fetchTrades();
+fetchStats('day');

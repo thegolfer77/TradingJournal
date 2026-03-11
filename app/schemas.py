@@ -41,3 +41,12 @@ class TradeRead(BaseModel):
 class SyncResult(BaseModel):
     imported: int
     skipped: int
+
+
+class PeriodStats(BaseModel):
+    period: str
+    pnl_money: float
+    pnl_percent: float
+    trades: int
+    winrate_percent: float
+    profit_factor: float
