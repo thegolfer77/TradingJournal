@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import hashlib
 from datetime import datetime
 from typing import Any, Iterable
 
@@ -48,6 +49,22 @@ def _pick(source: dict[str, Any], *keys: str) -> Any:
             return source.get(key)
     return None
 
+
+
+
+def _fallback_trade_id(position: dict[str, Any], row: dict[str, Any], details: dict[str, Any]) -> str:
+    raw_key = "|".join(
+        [
+            str(_pick(position, "epic", "symbol") or _pick(row, "epic", "symbol") or _pick(details, "epic", "symbol") or "UNKNOWN"),
+            str(_pick(position, "direction") or _pick(row, "direction") or _pick(details, "direction") or "UNKNOWN"),
+            str(_pick(position, "closeDate") or _pick(row, "closeDate", "closedAt", "date", "timestamp", "utcTimestamp") or _pick(details, "closeDate", "closedAt", "date", "timestamp", "utcTimestamp") or ""),
+            str(_pick(position, "openDate", "createdDate") or _pick(row, "openDate", "createdAt") or _pick(details, "openDate", "createdAt") or ""),
+            str(_pick(position, "profit", "profitAndLoss", "pnl", "profitLoss", "netProfit", "realizedPnl") or _pick(row, "profit", "profitAndLoss", "pnl", "profitLoss", "netProfit", "realizedPnl") or _pick(details, "profit", "profitAndLoss", "pnl", "profitLoss", "netProfit", "realizedPnl") or ""),
+            str(_pick(position, "size", "quantity") or _pick(row, "size", "quantity") or _pick(details, "size", "quantity") or ""),
+        ]
+    )
+    digest = hashlib.sha1(raw_key.encode("utf-8")).hexdigest()[:16]
+    return f"SYN-{digest}"
 
 def _is_closed(position: dict[str, Any], row: dict[str, Any]) -> bool:
     status_value = str(
@@ -103,7 +120,7 @@ def normalize_capital_trades(raw_positions: Iterable[dict[str, Any]]) -> list[No
             or ""
         )
         if not trade_id:
-            continue
+            trade_id = _fallback_trade_id(position, row, details)
 
         entry = _to_float(
             _pick(position, "level", "openLevel", "openPrice"),

@@ -112,3 +112,20 @@ def test_normalize_capital_trades_supports_activity_details_shape():
     assert result[0].trade_id == "ACT-1"
     assert result[0].symbol == "US100"
     assert result[0].pnl == 50.0
+
+
+def test_normalize_capital_trades_generates_id_when_missing():
+    raw = [
+        {
+            "activityType": "POSITION_CLOSED",
+            "symbol": "EURUSD",
+            "direction": "BUY",
+            "profitAndLoss": "12.3",
+            "date": "2025-03-01T10:00:00Z",
+            "size": "1",
+        }
+    ]
+
+    result = normalize_capital_trades(raw)
+    assert len(result) == 1
+    assert result[0].trade_id.startswith("SYN-")
