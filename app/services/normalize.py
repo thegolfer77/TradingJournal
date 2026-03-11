@@ -35,26 +35,38 @@ def _to_float(*values: Any, default: float = 0.0) -> float:
     return default
 
 
+def _first_dict(*values: Any) -> dict[str, Any]:
+    for value in values:
+        if isinstance(value, dict):
+            return value
+    return {}
+
+
+def _pick(source: dict[str, Any], *keys: str) -> Any:
+    for key in keys:
+        if key in source and source.get(key) is not None:
+            return source.get(key)
+    return None
+
+
 def _is_closed(position: dict[str, Any], row: dict[str, Any]) -> bool:
     status_value = str(
-        position.get("status")
-        or row.get("status")
-        or row.get("dealStatus")
-        or row.get("statusCode")
+        _pick(position, "status")
+        or _pick(row, "status", "dealStatus", "statusCode")
         or ""
     ).upper()
-    tx_type = str(row.get("transactionType") or row.get("type") or row.get("action") or "").upper()
+    event_type = str(_pick(row, "transactionType", "type", "action", "activityType", "eventType") or "").upper()
 
     if status_value in {"OPEN", "OPENED", "ACTIVE"}:
         return False
 
-    if position.get("closeDate") or row.get("closeDate"):
+    if _pick(position, "closeDate") or _pick(row, "closeDate", "closedAt"):
         return True
 
     if status_value in {"CLOSED", "CLOSE", "DELETED", "SETTLED", "ACCEPTED"}:
         return True
 
-    if tx_type in {
+    if event_type in {
         "CLOSE",
         "POSITION_CLOSE",
         "POSITION_CLOSED",
@@ -62,14 +74,14 @@ def _is_closed(position: dict[str, Any], row: dict[str, Any]) -> bool:
         "DEAL_CLOSE",
         "CLOSED",
         "DEAL",
+        "POSITION_SETTLED",
     }:
         return True
 
-    # Some history endpoints only include transaction + pnl without explicit closed marker.
-    has_history_date = bool(row.get("date") or row.get("timestamp") or row.get("utcTimestamp"))
+    has_history_date = bool(_pick(row, "date", "timestamp", "utcTimestamp", "createdAt"))
     has_pnl = any(
-        key in row or key in position
-        for key in ("profitAndLoss", "profit", "pnl", "profitLoss")
+        _pick(row, key) is not None or _pick(position, key) is not None
+        for key in ("profitAndLoss", "profit", "pnl", "profitLoss", "netProfit", "realizedPnl")
     )
     return has_history_date and has_pnl
 
@@ -77,82 +89,75 @@ def _is_closed(position: dict[str, Any], row: dict[str, Any]) -> bool:
 def normalize_capital_trades(raw_positions: Iterable[dict[str, Any]]) -> list[NormalizedTrade]:
     trades: list[NormalizedTrade] = []
     for row in raw_positions:
-        position = row.get("position", row)
-        deal = row.get("market", row.get("instrument", {}))
+        details = _first_dict(row.get("details"), row.get("activity"))
+        position = _first_dict(row.get("position"), row.get("deal"), details, row)
+        deal = _first_dict(row.get("market"), row.get("instrument"), details.get("market"))
 
         if not _is_closed(position, row):
             continue
 
         trade_id = str(
-            position.get("dealId")
-            or position.get("dealReference")
-            or row.get("dealId")
-            or row.get("dealReference")
-            or row.get("transactionReference")
-            or row.get("reference")
-            or row.get("id")
+            _pick(position, "dealId", "dealReference")
+            or _pick(row, "dealId", "dealReference", "transactionReference", "reference", "id")
+            or _pick(details, "dealId", "dealReference", "reference", "id")
             or ""
         )
         if not trade_id:
             continue
 
         entry = _to_float(
-            position.get("level"),
-            position.get("openLevel"),
-            position.get("openPrice"),
-            row.get("openLevel"),
-            row.get("openPrice"),
+            _pick(position, "level", "openLevel", "openPrice"),
+            _pick(row, "openLevel", "openPrice", "level"),
+            _pick(details, "openLevel", "openPrice", "level"),
         )
         exit_price = _to_float(
-            position.get("closeLevel"),
-            position.get("closePrice"),
-            row.get("closeLevel"),
-            row.get("closePrice"),
-            row.get("level"),
+            _pick(position, "closeLevel", "closePrice"),
+            _pick(row, "closeLevel", "closePrice", "level"),
+            _pick(details, "closeLevel", "closePrice", "level"),
             default=entry,
         )
         quantity = _to_float(
-            position.get("size"),
-            position.get("quantity"),
-            row.get("size"),
-            row.get("quantity"),
+            _pick(position, "size", "quantity"),
+            _pick(row, "size", "quantity"),
+            _pick(details, "size", "quantity"),
             default=1.0,
         )
-        direction = str(position.get("direction") or row.get("direction") or "UNKNOWN").upper()
+        direction = str(
+            _pick(position, "direction")
+            or _pick(row, "direction")
+            or _pick(details, "direction")
+            or "UNKNOWN"
+        ).upper()
         pnl = _to_float(
-            position.get("profit"),
-            position.get("profitAndLoss"),
-            position.get("pnl"),
-            position.get("profitLoss"),
-            row.get("profitAndLoss"),
-            row.get("profit"),
-            row.get("pnl"),
-            row.get("profitLoss"),
+            _pick(position, "profit", "profitAndLoss", "pnl", "profitLoss", "netProfit", "realizedPnl"),
+            _pick(row, "profitAndLoss", "profit", "pnl", "profitLoss", "netProfit", "realizedPnl"),
+            _pick(details, "profitAndLoss", "profit", "pnl", "profitLoss", "netProfit", "realizedPnl"),
         )
 
         trades.append(
             NormalizedTrade(
                 trade_id=trade_id,
-                symbol=str(deal.get("epic") or position.get("epic") or row.get("epic") or row.get("symbol") or "UNKNOWN"),
+                symbol=str(
+                    _pick(deal, "epic")
+                    or _pick(position, "epic", "symbol")
+                    or _pick(row, "epic", "symbol")
+                    or _pick(details, "epic", "symbol")
+                    or "UNKNOWN"
+                ),
                 direction=direction,
                 quantity=quantity,
                 entry_price=entry,
                 exit_price=exit_price,
                 pnl=pnl,
                 opened_at=_parse_timestamp(
-                    position.get("createdDate")
-                    or position.get("openDate")
-                    or row.get("openDate")
-                    or row.get("date")
-                    or row.get("timestamp")
-                    or row.get("utcTimestamp")
+                    _pick(position, "createdDate", "openDate")
+                    or _pick(row, "openDate", "date", "timestamp", "utcTimestamp", "createdAt")
+                    or _pick(details, "openDate", "date", "timestamp", "utcTimestamp", "createdAt")
                 ),
                 closed_at=_parse_timestamp(
-                    position.get("closeDate")
-                    or row.get("closeDate")
-                    or row.get("date")
-                    or row.get("timestamp")
-                    or row.get("utcTimestamp")
+                    _pick(position, "closeDate")
+                    or _pick(row, "closeDate", "closedAt", "date", "timestamp", "utcTimestamp")
+                    or _pick(details, "closeDate", "closedAt", "date", "timestamp", "utcTimestamp")
                 ),
             )
         )

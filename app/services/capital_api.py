@@ -138,6 +138,8 @@ class CapitalComClient:
             sources.append(await self._try_get("/history/transactions", headers, {"limit": limit}))
             sources.append(await self._try_get("/history/activity", headers, {"limit": limit}))
             sources.append(await self._try_get("/history/deals", headers, {"limit": limit}))
+            sources.append(await self._try_get("/history", headers, {"limit": limit}))
+            sources.append(await self._try_get("/history/activities", headers, {"limit": limit}))
 
             positions: list[dict[str, Any]] = []
             for payload in sources:
@@ -147,7 +149,7 @@ class CapitalComClient:
                     positions.extend(payload)
                     continue
                 if isinstance(payload, dict):
-                    for key in ("positions", "deals", "transactions", "activities", "history", "items"):
+                    for key in ("positions", "deals", "transactions", "activities", "history", "items", "nodes", "data"):
                         val = payload.get(key)
                         if isinstance(val, list):
                             positions.extend(val)

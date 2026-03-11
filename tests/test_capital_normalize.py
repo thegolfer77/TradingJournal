@@ -88,3 +88,27 @@ def test_normalize_capital_trades_does_not_treat_closelevel_as_closed():
     ]
 
     assert normalize_capital_trades(raw) == []
+
+
+def test_normalize_capital_trades_supports_activity_details_shape():
+    raw = [
+        {
+            "activityType": "POSITION_CLOSED",
+            "details": {
+                "dealReference": "ACT-1",
+                "symbol": "US100",
+                "direction": "BUY",
+                "size": "1",
+                "openPrice": "20000",
+                "closePrice": "20050",
+                "netProfit": "50.0",
+                "date": "2025-01-01T09:10:00Z",
+            },
+        }
+    ]
+
+    result = normalize_capital_trades(raw)
+    assert len(result) == 1
+    assert result[0].trade_id == "ACT-1"
+    assert result[0].symbol == "US100"
+    assert result[0].pnl == 50.0
