@@ -7,8 +7,8 @@ from sqlmodel import Session, select
 
 from app.db import get_session, init_db
 from app.models import PlatformConfig, Trade
-from app.schemas import PeriodStats, PlatformCreate, PlatformRead, SyncResult, TradeRead
-from app.services.capital_api import CapitalAPIError
+from app.schemas import OpenPositionRead, PeriodStats, PlatformCreate, PlatformRead, SyncResult, TradeRead
+from app.services.capital_api import CapitalAPIError, CapitalComClient
 from app.services.sync import sync_platform_trades
 
 app = FastAPI(title="TradingJournal", version="0.1.0")
@@ -57,6 +57,46 @@ async def sync_platform(platform_id: int, session: Session = Depends(get_session
     except CapitalAPIError as exc:
         raise HTTPException(status_code=exc.status_code, detail=exc.message) from exc
     return SyncResult(imported=imported, skipped=skipped, fetched=fetched, normalized=normalized)
+
+
+
+
+@app.get("/api/platforms/{platform_id}/open-positions", response_model=list[OpenPositionRead])
+async def open_positions(platform_id: int, session: Session = Depends(get_session)):
+    platform = session.get(PlatformConfig, platform_id)
+    if not platform:
+        raise HTTPException(status_code=404, detail="Plattform nicht gefunden")
+    if platform.platform_type != "capital_com":
+        return []
+    if not platform.api_key or not platform.identifier or not platform.password:
+        raise HTTPException(status_code=400, detail="Plattform ist nicht vollständig konfiguriert")
+
+    client = CapitalComClient(
+        api_key=platform.api_key,
+        identifier=platform.identifier,
+        password=platform.password,
+        demo_mode=platform.demo_mode,
+        base_url=platform.api_base_url,
+    )
+    try:
+        rows = await client.fetch_open_positions()
+    except CapitalAPIError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=exc.message) from exc
+
+    return [
+        OpenPositionRead(
+            platform_id=platform.id,
+            external_position_id=r.position_id,
+            symbol=r.symbol,
+            direction=r.direction,
+            quantity=r.quantity,
+            entry_price=r.entry_price,
+            current_price=r.current_price,
+            unrealized_pnl=r.unrealized_pnl,
+            opened_at=r.opened_at,
+        )
+        for r in rows
+    ]
 
 
 @app.get("/api/trades", response_model=list[TradeRead])

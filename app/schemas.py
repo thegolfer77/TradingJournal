@@ -38,6 +38,18 @@ class TradeRead(BaseModel):
     notes: Optional[str]
 
 
+class OpenPositionRead(BaseModel):
+    platform_id: int
+    external_position_id: str
+    symbol: str
+    direction: str
+    quantity: float
+    entry_price: float
+    current_price: float
+    unrealized_pnl: float
+    opened_at: datetime
+
+
 class SyncResult(BaseModel):
     imported: int
     skipped: int

@@ -1,6 +1,7 @@
 const statusEl = document.getElementById('status');
 const platformList = document.getElementById('platform-list');
 const tradeBody = document.getElementById('trade-body');
+const openBody = document.getElementById('open-body');
 const statsBody = document.getElementById('stats-body');
 const calendar = document.getElementById('calendar');
 let selectedPeriod = 'day';
@@ -12,28 +13,52 @@ async function fetchPlatforms() {
 
   data.forEach((p) => {
     const li = document.createElement('li');
-    const btn = document.createElement('button');
-    btn.innerText = `Sync ${p.name}`;
-    btn.onclick = async () => {
-      btn.disabled = true;
-      btn.innerText = `Sync läuft...`;
+
+    const syncBtn = document.createElement('button');
+    syncBtn.innerText = `Sync Closed ${p.name}`;
+    syncBtn.onclick = async () => {
+      syncBtn.disabled = true;
+      syncBtn.innerText = `Sync läuft...`;
       const syncRes = await fetch(`/api/platforms/${p.id}/sync`, { method: 'POST' });
       const syncData = await syncRes.json();
       if (!syncRes.ok) {
         statusEl.innerText = syncData.detail || 'Sync fehlgeschlagen';
-        btn.disabled = false;
-        btn.innerText = `Sync ${p.name}`;
+        syncBtn.disabled = false;
+        syncBtn.innerText = `Sync Closed ${p.name}`;
         return;
       }
-      statusEl.innerText = `Sync: fetched=${syncData.fetched}, normalized=${syncData.normalized}, importiert=${syncData.imported}, übersprungen=${syncData.skipped}`;
+      statusEl.innerText = `Closed Sync: fetched=${syncData.fetched}, normalized=${syncData.normalized}, importiert=${syncData.imported}, übersprungen=${syncData.skipped}`;
       await fetchTrades();
       await fetchStats(selectedPeriod);
-      btn.disabled = false;
-      btn.innerText = `Sync ${p.name}`;
+      syncBtn.disabled = false;
+      syncBtn.innerText = `Sync Closed ${p.name}`;
     };
+
+    const openBtn = document.createElement('button');
+    openBtn.innerText = `Load Open ${p.name}`;
+    openBtn.onclick = async () => {
+      const resOpen = await fetch(`/api/platforms/${p.id}/open-positions`);
+      const dataOpen = await resOpen.json();
+      if (!resOpen.ok) {
+        statusEl.innerText = dataOpen.detail || 'Open-Positionen Laden fehlgeschlagen';
+        return;
+      }
+      renderOpenPositions(dataOpen, p.name);
+    };
+
     li.innerText = `${p.name} (${p.platform_type}, ${p.demo_mode ? 'Demo' : 'Live'}) `;
-    li.appendChild(btn);
+    li.appendChild(syncBtn);
+    li.appendChild(openBtn);
     platformList.appendChild(li);
+  });
+}
+
+function renderOpenPositions(rows, platformName) {
+  openBody.innerHTML = '';
+  rows.forEach((r) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${platformName}</td><td>${r.symbol}</td><td>${r.direction}</td><td>${r.quantity}</td><td>${r.entry_price}</td><td>${r.current_price}</td><td>${r.unrealized_pnl}</td><td>${new Date(r.opened_at).toLocaleString()}</td>`;
+    openBody.appendChild(tr);
   });
 }
 

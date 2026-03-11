@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Any
 
 import httpx
@@ -12,6 +13,18 @@ class CapitalAPIError(Exception):
     status_code: int = 400
 
 
+@dataclass
+class OpenPosition:
+    position_id: str
+    symbol: str
+    direction: str
+    quantity: float
+    entry_price: float
+    current_price: float
+    unrealized_pnl: float
+    opened_at: datetime
+
+
 def _extract_error_code(response: httpx.Response) -> str:
     try:
         payload = response.json()
@@ -20,6 +33,12 @@ def _extract_error_code(response: httpx.Response) -> str:
     except Exception:
         pass
     return ""
+
+
+def _parse_timestamp(value: str | None) -> datetime:
+    if not value:
+        return datetime.utcnow()
+    return datetime.fromisoformat(value.replace("Z", "+00:00"))
 
 
 class CapitalComClient:
@@ -112,3 +131,30 @@ class CapitalComClient:
             raise self._map_http_error(exc) from exc
         except httpx.HTTPError as exc:
             raise CapitalAPIError("Netzwerkfehler beim Abruf der Positionen.", status_code=502) from exc
+
+    async def fetch_open_positions(self, limit: int = 200) -> list[OpenPosition]:
+        headers = await self._auth_headers()
+        try:
+            payload = await self._get("/positions", headers, {"status": "OPEN", "limit": limit})
+            rows = payload.get("positions", payload if isinstance(payload, list) else [])
+            result: list[OpenPosition] = []
+            for row in rows:
+                position = row.get("position", row)
+                market = row.get("market", {})
+                result.append(
+                    OpenPosition(
+                        position_id=str(position.get("dealId") or position.get("dealReference") or ""),
+                        symbol=str(market.get("epic") or position.get("epic") or "UNKNOWN"),
+                        direction=str(position.get("direction") or "UNKNOWN").upper(),
+                        quantity=float(position.get("size") or 0),
+                        entry_price=float(position.get("level") or position.get("openLevel") or 0),
+                        current_price=float(position.get("bid") or position.get("offer") or position.get("currentPrice") or 0),
+                        unrealized_pnl=float(position.get("profit") or position.get("profitAndLoss") or 0),
+                        opened_at=_parse_timestamp(position.get("createdDate") or position.get("openDate")),
+                    )
+                )
+            return result
+        except httpx.HTTPStatusError as exc:
+            raise self._map_http_error(exc) from exc
+        except httpx.HTTPError as exc:
+            raise CapitalAPIError("Netzwerkfehler beim Abruf offener Positionen.", status_code=502) from exc

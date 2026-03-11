@@ -42,9 +42,10 @@ Hinweis: Der Sync importiert jetzt ausschließlich geschlossene Trades (keine of
 - Profit Faktor
 
 ## API
+- `GET /api/platforms/{id}/open-positions` (offene Positionen)
+- `POST /api/platforms/{id}/sync` (geschlossene Trades importieren)
+- `GET /api/trades` (geschlossene Trades in DB)
 - `GET /api/stats?period=day|month|year`
-- `POST /api/platforms/{id}/sync`
-- `GET /api/trades`
 
 
 ## Sync-Debug
