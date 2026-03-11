@@ -44,6 +44,7 @@ async function fetchPlatforms() {
         return;
       }
       renderOpenPositions(dataOpen, p.name);
+      statusEl.innerText = `Open geladen: ${dataOpen.length} Position(en) von ${p.name}`;
     };
 
     li.innerText = `${p.name} (${p.platform_type}, ${p.demo_mode ? 'Demo' : 'Live'}) `;

@@ -64,3 +64,10 @@ python -m uvicorn app.main:app --reload
 Danach erneut Sync ausführen.
 
 Hinweis: `closeLevel` allein zählt nicht mehr als geschlossener Trade (weil offene Positionen oft ein Close-/SL-Level haben).
+
+
+## Wenn weiterhin keine geschlossenen Trades erscheinen
+- Prüfe die Sync-Statuszeile: `fetched`, `normalized`, `importiert`, `übersprungen`.
+- `fetched=0`: Konto liefert keine Historie über verfügbare Endpoints.
+- `fetched>0`, `normalized=0`: Es kommen nur offene/irrelevante Events zurück.
+- Offene Positionen siehst du separat über `Load Open ...` bzw. `GET /api/platforms/{id}/open-positions`.

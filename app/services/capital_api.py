@@ -41,6 +41,17 @@ def _parse_timestamp(value: str | None) -> datetime:
     return datetime.fromisoformat(value.replace("Z", "+00:00"))
 
 
+def _num(*values: Any) -> float:
+    for v in values:
+        if v is None:
+            continue
+        try:
+            return float(v)
+        except (TypeError, ValueError):
+            continue
+    return 0.0
+
+
 class CapitalComClient:
     """Minimal Capital.com API client focused on trade history sync."""
 
@@ -112,20 +123,33 @@ class CapitalComClient:
             response.raise_for_status()
             return response.json()
 
+    async def _try_get(self, path: str, headers: dict[str, str], params: dict[str, Any] | None = None) -> Any:
+        try:
+            return await self._get(path, headers, params)
+        except httpx.HTTPStatusError:
+            return None
+
     async def fetch_closed_positions(self, limit: int = 200) -> list[dict[str, Any]]:
         headers = await self._auth_headers()
         try:
-            payload = await self._get("/positions", headers, {"status": "CLOSED", "limit": limit})
-            positions = payload.get("positions", payload if isinstance(payload, list) else [])
+            sources: list[Any] = []
+            sources.append(await self._try_get("/positions", headers, {"status": "CLOSED", "limit": limit}))
+            sources.append(await self._try_get("/history/positions", headers, {"limit": limit}))
+            sources.append(await self._try_get("/history/transactions", headers, {"limit": limit}))
+            sources.append(await self._try_get("/history/activity", headers, {"limit": limit}))
 
-            if not positions:
-                hist = await self._get("/history/positions", headers, {"limit": limit})
-                positions = hist.get("positions", hist.get("deals", hist if isinstance(hist, list) else []))
-
-            if not positions:
-                tx = await self._get("/history/transactions", headers, {"limit": limit})
-                positions = tx.get("transactions", tx.get("deals", tx if isinstance(tx, list) else []))
-
+            positions: list[dict[str, Any]] = []
+            for payload in sources:
+                if not payload:
+                    continue
+                if isinstance(payload, list):
+                    positions.extend(payload)
+                    continue
+                if isinstance(payload, dict):
+                    for key in ("positions", "deals", "transactions", "activities"):
+                        val = payload.get(key)
+                        if isinstance(val, list):
+                            positions.extend(val)
             return positions
         except httpx.HTTPStatusError as exc:
             raise self._map_http_error(exc) from exc
@@ -141,15 +165,29 @@ class CapitalComClient:
             for row in rows:
                 position = row.get("position", row)
                 market = row.get("market", {})
+                current_price = _num(
+                    market.get("bid"),
+                    market.get("offer"),
+                    position.get("bid"),
+                    position.get("offer"),
+                    position.get("currentPrice"),
+                )
+                unrealized = _num(
+                    position.get("profit"),
+                    position.get("profitAndLoss"),
+                    position.get("upl"),
+                    row.get("profitAndLoss"),
+                    row.get("upl"),
+                )
                 result.append(
                     OpenPosition(
                         position_id=str(position.get("dealId") or position.get("dealReference") or ""),
                         symbol=str(market.get("epic") or position.get("epic") or "UNKNOWN"),
                         direction=str(position.get("direction") or "UNKNOWN").upper(),
-                        quantity=float(position.get("size") or 0),
-                        entry_price=float(position.get("level") or position.get("openLevel") or 0),
-                        current_price=float(position.get("bid") or position.get("offer") or position.get("currentPrice") or 0),
-                        unrealized_pnl=float(position.get("profit") or position.get("profitAndLoss") or 0),
+                        quantity=_num(position.get("size"), position.get("quantity")),
+                        entry_price=_num(position.get("level"), position.get("openLevel"), position.get("openPrice")),
+                        current_price=current_price,
+                        unrealized_pnl=unrealized,
                         opened_at=_parse_timestamp(position.get("createdDate") or position.get("openDate")),
                     )
                 )
