@@ -20,9 +20,16 @@ python -m uvicorn app.main:app --reload
 6. Sync-Button klicken
 
 ## Fehler 401 / 429 beim Sync
-- **401**: Zugangsdaten passen nicht zum Modus (Demo vs Live) oder API-Key/Identifier/Passwort sind falsch.
+- **401**: Zugangsdaten passen nicht zum Modus (Demo vs Live), API-Key nicht für dieses Konto freigeschaltet, Identifier/Passwort falsch oder Session-Scope nicht korrekt.
 - **429**: Rate Limit. 30-60 Sekunden warten und erneut synchronisieren.
-- Die App zeigt diese Fehler jetzt als klare Meldung im UI statt 500 Internal Server Error.
+- Die API-Fehlermeldung (`errorCode`) wird jetzt direkt in der UI angezeigt (als `API-Reason`), damit klar ist, woran es liegt.
+
+### Wenn 401 trotz korrekter Daten bleibt
+- Prüfen, ob der API-Key wirklich für **Live** erzeugt wurde (nicht Demo-Key).
+- In Capital.com prüfen, ob API-Zugriff für das Konto aktiv ist.
+- Identifier exakt wie im Capital-Login verwenden (Groß/Kleinschreibung beachten).
+- 2FA-/Sicherheits-Policy im Konto prüfen.
+- Bei wiederholten Fehlversuchen 1-2 Minuten warten (temporärer Block möglich).
 
 ## Neue Auswertungen
 - Kalenderansicht mit Tages-/Monats-/Jahresaggregation

@@ -12,6 +12,15 @@ class CapitalAPIError(Exception):
     status_code: int = 400
 
 
+def _extract_error_code(response: httpx.Response) -> str:
+    try:
+        payload = response.json()
+        if isinstance(payload, dict):
+            return str(payload.get("errorCode") or payload.get("message") or "")
+    except Exception:
+        pass
+    return ""
+
 class CapitalComClient:
     """Minimal Capital.com API client focused on trade history sync."""
 
@@ -35,18 +44,20 @@ class CapitalComClient:
     @staticmethod
     def _map_http_error(exc: httpx.HTTPStatusError) -> CapitalAPIError:
         code = exc.response.status_code
+        api_reason = _extract_error_code(exc.response)
+        suffix = f" API-Reason: {api_reason}" if api_reason else ""
         if code == 401:
             return CapitalAPIError(
-                "Capital.com Login fehlgeschlagen (401). Prüfe API-Key, Identifier, Passwort und ob Demo/Live korrekt gesetzt ist.",
+                "Capital.com Login fehlgeschlagen (401). Prüfe API-Key, Identifier, Passwort, ob Demo/Live korrekt gesetzt ist und ob der API-Key für dieses Konto freigeschaltet ist." + suffix,
                 status_code=401,
             )
         if code == 429:
             return CapitalAPIError(
-                "Capital.com Rate Limit erreicht (429). Bitte 30-60 Sekunden warten und erneut synchronisieren.",
+                "Capital.com Rate Limit erreicht (429). Bitte 30-60 Sekunden warten und erneut synchronisieren." + suffix,
                 status_code=429,
             )
         return CapitalAPIError(
-            f"Capital.com API Fehler ({code}). Bitte später erneut versuchen.",
+            f"Capital.com API Fehler ({code}). Bitte später erneut versuchen." + suffix,
             status_code=400,
         )
 
@@ -55,7 +66,11 @@ class CapitalComClient:
             async with httpx.AsyncClient(timeout=20) as client:
                 response = await client.post(
                     f"{self.base_url}/session",
-                    headers={"X-CAP-API-KEY": self.api_key},
+                    headers={
+                        "X-CAP-API-KEY": self.api_key,
+                        "Content-Type": "application/json",
+                        "Accept": "application/json",
+                    },
                     json={"identifier": self.identifier, "password": self.password},
                 )
                 response.raise_for_status()
