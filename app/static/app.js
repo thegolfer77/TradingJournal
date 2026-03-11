@@ -15,7 +15,7 @@ async function fetchPlatforms() {
     const li = document.createElement('li');
 
     const syncBtn = document.createElement('button');
-    syncBtn.innerText = `Sync Closed ${p.name}`;
+    syncBtn.innerText = "Sync Closed ...";
     syncBtn.onclick = async () => {
       syncBtn.disabled = true;
       syncBtn.innerText = `Sync läuft...`;
@@ -24,18 +24,19 @@ async function fetchPlatforms() {
       if (!syncRes.ok) {
         statusEl.innerText = syncData.detail || 'Sync fehlgeschlagen';
         syncBtn.disabled = false;
-        syncBtn.innerText = `Sync Closed ${p.name}`;
+        syncBtn.innerText = "Sync Closed ...";
         return;
       }
-      statusEl.innerText = `Closed Sync: fetched=${syncData.fetched}, normalized=${syncData.normalized}, importiert=${syncData.imported}, übersprungen=${syncData.skipped}`;
+      const hint = (syncData.fetched > 0 && syncData.normalized === 0) ? " | Hinweis: History gefunden, aber kein Datensatz als CLOSED erkannt." : "";
+      statusEl.innerText = `Closed Sync: fetched=${syncData.fetched}, normalized=${syncData.normalized}, importiert=${syncData.imported}, übersprungen=${syncData.skipped}${hint}`;
       await fetchTrades();
       await fetchStats(selectedPeriod);
       syncBtn.disabled = false;
-      syncBtn.innerText = `Sync Closed ${p.name}`;
+      syncBtn.innerText = "Sync Closed ...";
     };
 
     const openBtn = document.createElement('button');
-    openBtn.innerText = `Load Open ${p.name}`;
+    openBtn.innerText = "Load Open ...";
     openBtn.onclick = async () => {
       const resOpen = await fetch(`/api/platforms/${p.id}/open-positions`);
       const dataOpen = await resOpen.json();

@@ -137,6 +137,7 @@ class CapitalComClient:
             sources.append(await self._try_get("/history/positions", headers, {"limit": limit}))
             sources.append(await self._try_get("/history/transactions", headers, {"limit": limit}))
             sources.append(await self._try_get("/history/activity", headers, {"limit": limit}))
+            sources.append(await self._try_get("/history/deals", headers, {"limit": limit}))
 
             positions: list[dict[str, Any]] = []
             for payload in sources:
@@ -146,7 +147,7 @@ class CapitalComClient:
                     positions.extend(payload)
                     continue
                 if isinstance(payload, dict):
-                    for key in ("positions", "deals", "transactions", "activities"):
+                    for key in ("positions", "deals", "transactions", "activities", "history", "items"):
                         val = payload.get(key)
                         if isinstance(val, list):
                             positions.extend(val)
@@ -176,8 +177,12 @@ class CapitalComClient:
                     position.get("profit"),
                     position.get("profitAndLoss"),
                     position.get("upl"),
+                    position.get("pnl"),
+                    position.get("profitLoss"),
                     row.get("profitAndLoss"),
                     row.get("upl"),
+                    row.get("pnl"),
+                    row.get("profitLoss"),
                 )
                 result.append(
                     OpenPosition(

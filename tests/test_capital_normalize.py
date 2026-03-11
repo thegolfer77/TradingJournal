@@ -38,6 +38,7 @@ def test_normalize_capital_trades_skips_open_positions():
                 "direction": "BUY",
                 "profit": 5,
                 "createdDate": "2024-01-01T10:00:00Z",
+                "status": "OPEN",
             },
             "market": {"epic": "EURUSD"},
         }
@@ -47,23 +48,26 @@ def test_normalize_capital_trades_skips_open_positions():
     assert result == []
 
 
-def test_normalize_capital_trades_requires_closed_signals():
+def test_normalize_capital_trades_supports_history_transaction_shape():
     raw = [
         {
-            "position": {
-                "dealId": "UNK1",
-                "level": 100.0,
-                "size": 1,
-                "direction": "BUY",
-                "profit": 5,
-                "createdDate": "2024-01-01T10:00:00Z",
-                "status": "ACTIVE",
-            },
-            "market": {"epic": "EURUSD"},
+            "id": "tx-1",
+            "transactionReference": "TX1",
+            "transactionType": "DEAL",
+            "epic": "DE40",
+            "direction": "SELL",
+            "size": "3",
+            "level": "19100.2",
+            "profitAndLoss": "-12.5",
+            "date": "2024-11-02T08:15:00Z",
         }
     ]
 
-    assert normalize_capital_trades(raw) == []
+    result = normalize_capital_trades(raw)
+    assert len(result) == 1
+    assert result[0].trade_id == "TX1"
+    assert result[0].symbol == "DE40"
+    assert result[0].pnl == -12.5
 
 
 def test_normalize_capital_trades_does_not_treat_closelevel_as_closed():
