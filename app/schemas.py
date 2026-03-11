@@ -41,6 +41,8 @@ class TradeRead(BaseModel):
 class SyncResult(BaseModel):
     imported: int
     skipped: int
+    fetched: int
+    normalized: int
 
 
 class PeriodStats(BaseModel):

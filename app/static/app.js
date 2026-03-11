@@ -25,7 +25,7 @@ async function fetchPlatforms() {
         btn.innerText = `Sync ${p.name}`;
         return;
       }
-      statusEl.innerText = `Sync: ${syncData.imported} importiert, ${syncData.skipped} übersprungen`;
+      statusEl.innerText = `Sync: fetched=${syncData.fetched}, normalized=${syncData.normalized}, importiert=${syncData.imported}, übersprungen=${syncData.skipped}`;
       await fetchTrades();
       await fetchStats(selectedPeriod);
       btn.disabled = false;

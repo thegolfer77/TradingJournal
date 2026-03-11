@@ -99,10 +99,13 @@ class CapitalComClient:
             payload = await self._get("/positions", headers, {"status": "CLOSED", "limit": limit})
             positions = payload.get("positions", payload if isinstance(payload, list) else [])
 
-            # Fallback for accounts/environments where closed data is exposed under history endpoints.
             if not positions:
                 hist = await self._get("/history/positions", headers, {"limit": limit})
                 positions = hist.get("positions", hist.get("deals", hist if isinstance(hist, list) else []))
+
+            if not positions:
+                tx = await self._get("/history/transactions", headers, {"limit": limit})
+                positions = tx.get("transactions", tx.get("deals", tx if isinstance(tx, list) else []))
 
             return positions
         except httpx.HTTPStatusError as exc:

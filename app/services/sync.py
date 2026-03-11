@@ -5,9 +5,9 @@ from app.services.capital_api import CapitalComClient
 from app.services.normalize import normalize_capital_trades
 
 
-async def sync_platform_trades(session: Session, platform: PlatformConfig) -> tuple[int, int]:
+async def sync_platform_trades(session: Session, platform: PlatformConfig) -> tuple[int, int, int, int]:
     if platform.platform_type != "capital_com":
-        return 0, 0
+        return 0, 0, 0, 0
 
     if not platform.api_key or not platform.identifier or not platform.password:
         raise ValueError("Capital.com Plattform ist nicht vollständig konfiguriert.")
@@ -24,6 +24,8 @@ async def sync_platform_trades(session: Session, platform: PlatformConfig) -> tu
 
     imported = 0
     skipped = 0
+    fetched = len(raw)
+    normalized_count = len(normalized)
 
     for trade in normalized:
         existing = session.exec(
@@ -53,4 +55,4 @@ async def sync_platform_trades(session: Session, platform: PlatformConfig) -> tu
         imported += 1
 
     session.commit()
-    return imported, skipped
+    return imported, skipped, fetched, normalized_count
