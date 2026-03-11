@@ -12,4 +12,4 @@ if [ ! -d app ]; then
 fi
 
 . .venv/bin/activate
-exec uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+exec python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000

@@ -13,7 +13,7 @@ cd TradingJournal
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-uvicorn app.main:app --reload
+python -m uvicorn app.main:app --reload
 ```
 
 Öffnen: `http://127.0.0.1:8000`
@@ -32,7 +32,7 @@ bash recover.sh
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-uvicorn app.main:app --reload
+python -m uvicorn app.main:app --reload
 ```
 
 ## Manuelle Diagnose
