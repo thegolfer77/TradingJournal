@@ -48,7 +48,7 @@ Hinweis: Der Sync importiert jetzt ausschließlich geschlossene Trades (keine of
 
 
 ## Sync-Debug
-Nach dem Sync zeigt die UI jetzt: `fetched`, `normalized`, `importiert`, `übersprungen`.
+Nach dem Sync zeigt die UI jetzt: `fetched`, `normalized`, `importiert`, `übersprungen` und `sources ...` (Top-Quellen).
 - `fetched=0`: Capital liefert keine Historie zurück (Endpoint/Konto-Policy prüfen).
 - `fetched>0` aber `normalized=0`: Payload hat keine als geschlossen erkannten Trades.
 

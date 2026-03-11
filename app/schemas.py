@@ -54,6 +54,7 @@ class SyncResult(BaseModel):
     skipped: int
     fetched: int
     normalized: int
+    source_counts: dict[str, int] = {}
 
 
 class PeriodStats(BaseModel):

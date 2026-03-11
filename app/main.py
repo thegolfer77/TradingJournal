@@ -53,12 +53,12 @@ async def sync_platform(platform_id: int, session: Session = Depends(get_session
     if not platform:
         raise HTTPException(status_code=404, detail="Plattform nicht gefunden")
     try:
-        imported, skipped, fetched, normalized = await sync_platform_trades(session, platform)
+        imported, skipped, fetched, normalized, source_counts = await sync_platform_trades(session, platform)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except CapitalAPIError as exc:
         raise HTTPException(status_code=exc.status_code, detail=exc.message) from exc
-    return SyncResult(imported=imported, skipped=skipped, fetched=fetched, normalized=normalized)
+    return SyncResult(imported=imported, skipped=skipped, fetched=fetched, normalized=normalized, source_counts=source_counts)
 
 
 

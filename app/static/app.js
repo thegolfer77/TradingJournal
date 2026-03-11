@@ -28,7 +28,12 @@ async function fetchPlatforms() {
         return;
       }
       const hint = (syncData.fetched > 0 && syncData.normalized === 0) ? " | Hinweis: History gefunden, aber kein Datensatz als CLOSED erkannt." : "";
-      statusEl.innerText = `Closed Sync: fetched=${syncData.fetched}, normalized=${syncData.normalized}, importiert=${syncData.imported}, übersprungen=${syncData.skipped}${hint}`;
+      const topSources = Object.entries(syncData.source_counts || {})
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 3)
+        .map(([k, v]) => `${k}:${v}`)
+        .join(', ');
+      statusEl.innerText = `Closed Sync: fetched=${syncData.fetched}, normalized=${syncData.normalized}, importiert=${syncData.imported}, übersprungen=${syncData.skipped}${hint}${topSources ? ` | sources ${topSources}` : ''}`;
       console.log("sync-debug", syncData);
       await fetchTrades();
       await fetchStats(selectedPeriod);

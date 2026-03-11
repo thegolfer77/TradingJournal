@@ -187,6 +187,7 @@ class CapitalComClient:
         try:
             endpoints = [
                 ("/positions", {"status": "CLOSED", "limit": limit, "max": limit, "pageSize": limit}),
+                ("/positions", {"limit": limit, "max": limit, "pageSize": limit}),
                 ("/history/positions", {"limit": limit, "max": limit, "pageSize": limit}),
                 ("/history/transactions", {"limit": limit, "max": limit, "pageSize": limit}),
                 ("/history/activity", {"limit": limit, "max": limit, "pageSize": limit}),
@@ -196,8 +197,12 @@ class CapitalComClient:
             ]
 
             rows: list[dict[str, Any]] = []
+            source_counts: dict[str, int] = {}
             for path, params in endpoints:
-                rows.extend(await self._collect_paginated(path, headers, params))
+                page_rows = await self._collect_paginated(path, headers, params)
+                key = path if "status" not in params else f"{path}?status={params['status']}"
+                source_counts[key] = source_counts.get(key, 0) + len(page_rows)
+                rows.extend(page_rows)
 
             unique_rows: list[dict[str, Any]] = []
             seen: set[str] = set()
@@ -220,6 +225,30 @@ class CapitalComClient:
             raise self._map_http_error(exc) from exc
         except httpx.HTTPError as exc:
             raise CapitalAPIError("Netzwerkfehler beim Abruf der Positionen.", status_code=502) from exc
+
+
+    async def fetch_closed_positions_debug(self, limit: int = 1000) -> dict[str, Any]:
+        headers = await self._auth_headers()
+        endpoints = [
+            ("/positions", {"status": "CLOSED", "limit": limit, "max": limit, "pageSize": limit}),
+            ("/positions", {"limit": limit, "max": limit, "pageSize": limit}),
+            ("/history/positions", {"limit": limit, "max": limit, "pageSize": limit}),
+            ("/history/transactions", {"limit": limit, "max": limit, "pageSize": limit}),
+            ("/history/activity", {"limit": limit, "max": limit, "pageSize": limit}),
+            ("/history/deals", {"limit": limit, "max": limit, "pageSize": limit}),
+            ("/history", {"limit": limit, "max": limit, "pageSize": limit}),
+            ("/history/activities", {"limit": limit, "max": limit, "pageSize": limit}),
+        ]
+        out: dict[str, Any] = {"sources": {}}
+        for path, params in endpoints:
+            key = path if "status" not in params else f"{path}?status={params['status']}"
+            payload = await self._try_get(path, headers, params)
+            if payload is None:
+                out["sources"][key] = {"available": False, "rows": 0}
+                continue
+            rows = self._extract_rows(payload)
+            out["sources"][key] = {"available": True, "rows": len(rows)}
+        return out
 
     async def fetch_open_positions(self, limit: int = 200) -> list[OpenPosition]:
         headers = await self._auth_headers()
