@@ -64,3 +64,23 @@ def test_normalize_capital_trades_requires_closed_signals():
     ]
 
     assert normalize_capital_trades(raw) == []
+
+
+def test_normalize_capital_trades_does_not_treat_closelevel_as_closed():
+    raw = [
+        {
+            "position": {
+                "dealId": "OPEN_WITH_CLOSELEVEL",
+                "level": 100.0,
+                "closeLevel": 105.0,
+                "size": 1,
+                "direction": "BUY",
+                "profit": 2,
+                "status": "OPEN",
+                "createdDate": "2024-01-01T10:00:00Z",
+            },
+            "market": {"epic": "EURUSD"},
+        }
+    ]
+
+    assert normalize_capital_trades(raw) == []

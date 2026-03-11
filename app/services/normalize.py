@@ -25,21 +25,19 @@ def _parse_timestamp(value: str | None) -> datetime:
 
 
 def _is_closed(position: dict[str, Any], row: dict[str, Any]) -> bool:
-    status_value = str(
-        position.get("status")
-        or row.get("status")
-        or row.get("dealStatus")
-        or row.get("transactionType")
-        or ""
-    ).upper()
+    status_value = str(position.get("status") or row.get("status") or row.get("dealStatus") or "").upper()
+    tx_type = str(row.get("transactionType") or "").upper()
 
-    if status_value in {"OPEN", "OPENED"}:
+    if status_value in {"OPEN", "OPENED", "ACTIVE"}:
         return False
+
+    if position.get("closeDate") or row.get("closeDate"):
+        return True
 
     if status_value in {"CLOSED", "CLOSE", "DELETED", "SETTLED"}:
         return True
 
-    if position.get("closeDate") or position.get("closeLevel") or position.get("closePrice"):
+    if tx_type in {"CLOSE", "POSITION_CLOSE", "POSITION_CLOSED", "TRADE_CLOSED"}:
         return True
 
     return False
@@ -80,7 +78,7 @@ def normalize_capital_trades(raw_positions: Iterable[dict[str, Any]]) -> list[No
                 exit_price=exit_price,
                 pnl=pnl,
                 opened_at=_parse_timestamp(position.get("createdDate") or position.get("openDate") or row.get("date")),
-                closed_at=_parse_timestamp(position.get("closeDate") or row.get("date")),
+                closed_at=_parse_timestamp(position.get("closeDate") or row.get("closeDate") or row.get("date")),
             )
         )
     return trades

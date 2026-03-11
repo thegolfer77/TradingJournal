@@ -61,3 +61,5 @@ rm -f trading_journal.db
 python -m uvicorn app.main:app --reload
 ```
 Danach erneut Sync ausführen.
+
+Hinweis: `closeLevel` allein zählt nicht mehr als geschlossener Trade (weil offene Positionen oft ein Close-/SL-Level haben).
