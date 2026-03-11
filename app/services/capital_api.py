@@ -21,6 +21,7 @@ def _extract_error_code(response: httpx.Response) -> str:
         pass
     return ""
 
+
 class CapitalComClient:
     """Minimal Capital.com API client focused on trade history sync."""
 
@@ -86,18 +87,24 @@ class CapitalComClient:
         except httpx.HTTPError as exc:
             raise CapitalAPIError("Netzwerkfehler bei Capital.com. Bitte Verbindung prüfen.", status_code=502) from exc
 
+    async def _get(self, path: str, headers: dict[str, str], params: dict[str, Any] | None = None) -> Any:
+        async with httpx.AsyncClient(timeout=20) as client:
+            response = await client.get(f"{self.base_url}{path}", headers=headers, params=params)
+            response.raise_for_status()
+            return response.json()
+
     async def fetch_closed_positions(self, limit: int = 200) -> list[dict[str, Any]]:
         headers = await self._auth_headers()
         try:
-            async with httpx.AsyncClient(timeout=20) as client:
-                response = await client.get(
-                    f"{self.base_url}/positions",
-                    headers=headers,
-                    params={"status": "CLOSED", "limit": limit},
-                )
-                response.raise_for_status()
-                payload = response.json()
-                return payload.get("positions", payload if isinstance(payload, list) else [])
+            payload = await self._get("/positions", headers, {"status": "CLOSED", "limit": limit})
+            positions = payload.get("positions", payload if isinstance(payload, list) else [])
+
+            # Fallback for accounts/environments where closed data is exposed under history endpoints.
+            if not positions:
+                hist = await self._get("/history/positions", headers, {"limit": limit})
+                positions = hist.get("positions", hist.get("deals", hist if isinstance(hist, list) else []))
+
+            return positions
         except httpx.HTTPStatusError as exc:
             raise self._map_http_error(exc) from exc
         except httpx.HTTPError as exc:

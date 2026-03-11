@@ -17,7 +17,7 @@ python -m uvicorn app.main:app --reload
 3. API Key + Identifier + Passwort eintragen
 4. **Demo-Modus deaktivieren** (wichtig für Live)
 5. Optional `api_base_url` setzen
-6. Sync-Button klicken
+6. Sync-Button klicken (importiert geschlossene Trades)
 
 ## Fehler 401 / 429 beim Sync
 - **401**: Zugangsdaten passen nicht zum Modus (Demo vs Live), API-Key nicht für dieses Konto freigeschaltet, Identifier/Passwort falsch oder Session-Scope nicht korrekt.
@@ -30,6 +30,8 @@ python -m uvicorn app.main:app --reload
 - Identifier exakt wie im Capital-Login verwenden (Groß/Kleinschreibung beachten).
 - 2FA-/Sicherheits-Policy im Konto prüfen.
 - Bei wiederholten Fehlversuchen 1-2 Minuten warten (temporärer Block möglich).
+
+Hinweis: Der Sync importiert jetzt ausschließlich geschlossene Trades (keine offenen Positionen).
 
 ## Neue Auswertungen
 - Kalenderansicht mit Tages-/Monats-/Jahresaggregation

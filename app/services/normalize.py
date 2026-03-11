@@ -24,21 +24,33 @@ def _parse_timestamp(value: str | None) -> datetime:
     return datetime.fromisoformat(value.replace("Z", "+00:00"))
 
 
+def _is_closed(position: dict[str, Any], row: dict[str, Any]) -> bool:
+    status_value = str(position.get("status") or row.get("status") or "").upper()
+    if status_value == "CLOSED":
+        return True
+    if position.get("closeDate") or position.get("closeLevel"):
+        return True
+    return False
+
+
 def normalize_capital_trades(raw_positions: Iterable[dict[str, Any]]) -> list[NormalizedTrade]:
     trades: list[NormalizedTrade] = []
     for row in raw_positions:
         position = row.get("position", row)
         deal = row.get("market", {})
 
+        if not _is_closed(position, row):
+            continue
+
         trade_id = str(position.get("dealId") or position.get("dealReference") or "")
         if not trade_id:
             continue
 
-        entry = float(position.get("level") or 0)
+        entry = float(position.get("level") or position.get("openLevel") or 0)
         exit_price = float(position.get("closeLevel") or entry)
         quantity = float(position.get("size") or 0)
         direction = str(position.get("direction") or "UNKNOWN").upper()
-        pnl = float(position.get("profit") or 0)
+        pnl = float(position.get("profit") or position.get("profitAndLoss") or 0)
 
         trades.append(
             NormalizedTrade(
@@ -49,7 +61,7 @@ def normalize_capital_trades(raw_positions: Iterable[dict[str, Any]]) -> list[No
                 entry_price=entry,
                 exit_price=exit_price,
                 pnl=pnl,
-                opened_at=_parse_timestamp(position.get("createdDate")),
+                opened_at=_parse_timestamp(position.get("createdDate") or position.get("openDate")),
                 closed_at=_parse_timestamp(position.get("closeDate")),
             )
         )

@@ -26,3 +26,22 @@ def test_normalize_capital_trades_maps_fields():
     assert result[0].entry_price == 100.0
     assert result[0].exit_price == 110.0
     assert result[0].pnl == 20.0
+
+
+def test_normalize_capital_trades_skips_open_positions():
+    raw = [
+        {
+            "position": {
+                "dealId": "OPEN1",
+                "level": 100.0,
+                "size": 1,
+                "direction": "BUY",
+                "profit": 5,
+                "createdDate": "2024-01-01T10:00:00Z",
+            },
+            "market": {"epic": "EURUSD"},
+        }
+    ]
+
+    result = normalize_capital_trades(raw)
+    assert result == []
