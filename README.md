@@ -19,6 +19,11 @@ python -m uvicorn app.main:app --reload
 5. Optional `api_base_url` setzen
 6. Sync-Button klicken
 
+## Fehler 401 / 429 beim Sync
+- **401**: Zugangsdaten passen nicht zum Modus (Demo vs Live) oder API-Key/Identifier/Passwort sind falsch.
+- **429**: Rate Limit. 30-60 Sekunden warten und erneut synchronisieren.
+- Die App zeigt diese Fehler jetzt als klare Meldung im UI statt 500 Internal Server Error.
+
 ## Neue Auswertungen
 - Kalenderansicht mit Tages-/Monats-/Jahresaggregation
 - Gewinn in Geld

@@ -15,15 +15,21 @@ async function fetchPlatforms() {
     const btn = document.createElement('button');
     btn.innerText = `Sync ${p.name}`;
     btn.onclick = async () => {
+      btn.disabled = true;
+      btn.innerText = `Sync läuft...`;
       const syncRes = await fetch(`/api/platforms/${p.id}/sync`, { method: 'POST' });
       const syncData = await syncRes.json();
       if (!syncRes.ok) {
         statusEl.innerText = syncData.detail || 'Sync fehlgeschlagen';
+        btn.disabled = false;
+        btn.innerText = `Sync ${p.name}`;
         return;
       }
       statusEl.innerText = `Sync: ${syncData.imported} importiert, ${syncData.skipped} übersprungen`;
       await fetchTrades();
       await fetchStats(selectedPeriod);
+      btn.disabled = false;
+      btn.innerText = `Sync ${p.name}`;
     };
     li.innerText = `${p.name} (${p.platform_type}, ${p.demo_mode ? 'Demo' : 'Live'}) `;
     li.appendChild(btn);

@@ -8,6 +8,7 @@ from sqlmodel import Session, select
 from app.db import get_session, init_db
 from app.models import PlatformConfig, Trade
 from app.schemas import PeriodStats, PlatformCreate, PlatformRead, SyncResult, TradeRead
+from app.services.capital_api import CapitalAPIError
 from app.services.sync import sync_platform_trades
 
 app = FastAPI(title="TradingJournal", version="0.1.0")
@@ -53,6 +54,8 @@ async def sync_platform(platform_id: int, session: Session = Depends(get_session
         imported, skipped = await sync_platform_trades(session, platform)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except CapitalAPIError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=exc.message) from exc
     return SyncResult(imported=imported, skipped=skipped)
 
 
