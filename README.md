@@ -51,3 +51,13 @@ Hinweis: Der Sync importiert jetzt ausschließlich geschlossene Trades (keine of
 Nach dem Sync zeigt die UI jetzt: `fetched`, `normalized`, `importiert`, `übersprungen`.
 - `fetched=0`: Capital liefert keine Historie zurück (Endpoint/Konto-Policy prüfen).
 - `fetched>0` aber `normalized=0`: Payload hat keine als geschlossen erkannten Trades.
+
+
+## Alte offene Positionen bereinigen
+Wenn früher offene Positionen importiert wurden, bleiben sie in der lokalen SQLite-DB.
+Für einen sauberen Neuaufbau:
+```bash
+rm -f trading_journal.db
+python -m uvicorn app.main:app --reload
+```
+Danach erneut Sync ausführen.

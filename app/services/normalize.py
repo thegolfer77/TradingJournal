@@ -25,15 +25,23 @@ def _parse_timestamp(value: str | None) -> datetime:
 
 
 def _is_closed(position: dict[str, Any], row: dict[str, Any]) -> bool:
-    status_value = str(position.get("status") or row.get("status") or "").upper()
+    status_value = str(
+        position.get("status")
+        or row.get("status")
+        or row.get("dealStatus")
+        or row.get("transactionType")
+        or ""
+    ).upper()
+
     if status_value in {"OPEN", "OPENED"}:
         return False
-    if status_value:
+
+    if status_value in {"CLOSED", "CLOSE", "DELETED", "SETTLED"}:
         return True
-    if position.get("closeDate") or position.get("closeLevel"):
+
+    if position.get("closeDate") or position.get("closeLevel") or position.get("closePrice"):
         return True
-    if position.get("profitAndLoss") is not None and (position.get("openDate") or row.get("date")):
-        return True
+
     return False
 
 

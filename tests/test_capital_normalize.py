@@ -45,3 +45,22 @@ def test_normalize_capital_trades_skips_open_positions():
 
     result = normalize_capital_trades(raw)
     assert result == []
+
+
+def test_normalize_capital_trades_requires_closed_signals():
+    raw = [
+        {
+            "position": {
+                "dealId": "UNK1",
+                "level": 100.0,
+                "size": 1,
+                "direction": "BUY",
+                "profit": 5,
+                "createdDate": "2024-01-01T10:00:00Z",
+                "status": "ACTIVE",
+            },
+            "market": {"epic": "EURUSD"},
+        }
+    ]
+
+    assert normalize_capital_trades(raw) == []
