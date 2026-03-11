@@ -16,7 +16,6 @@ async def sync_platform_trades(session: Session, platform: PlatformConfig) -> tu
         api_key=platform.api_key,
         identifier=platform.identifier,
         password=platform.password,
-        demo_mode=platform.demo_mode,
         base_url=platform.api_base_url,
     )
     raw = await client.fetch_closed_positions()

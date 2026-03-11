@@ -32,7 +32,9 @@ def create_platform(payload: PlatformCreate, session: Session = Depends(get_sess
     if existing:
         raise HTTPException(status_code=409, detail="Name ist bereits vergeben")
 
-    row = PlatformConfig(**payload.model_dump())
+    data = payload.model_dump()
+    data["demo_mode"] = False
+    row = PlatformConfig(**data)
     session.add(row)
     session.commit()
     session.refresh(row)
@@ -75,7 +77,6 @@ async def open_positions(platform_id: int, session: Session = Depends(get_sessio
         api_key=platform.api_key,
         identifier=platform.identifier,
         password=platform.password,
-        demo_mode=platform.demo_mode,
         base_url=platform.api_base_url,
     )
     try:

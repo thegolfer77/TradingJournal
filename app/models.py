@@ -12,7 +12,7 @@ class PlatformConfig(SQLModel, table=True):
     api_key: Optional[str] = None
     identifier: Optional[str] = None
     password: Optional[str] = None
-    demo_mode: bool = Field(default=True)
+    demo_mode: bool = Field(default=False)
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 

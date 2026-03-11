@@ -48,7 +48,7 @@ async function fetchPlatforms() {
       statusEl.innerText = `Open geladen: ${dataOpen.length} Position(en) von ${p.name}`;
     };
 
-    li.innerText = `${p.name} (${p.platform_type}, ${p.demo_mode ? 'Demo' : 'Live'}) `;
+    li.innerText = `${p.name} (${p.platform_type}, Live)`;
     li.appendChild(syncBtn);
     li.appendChild(openBtn);
     platformList.appendChild(li);
@@ -108,7 +108,6 @@ document.getElementById('platform-form').addEventListener('submit', async (e) =>
     api_key: formData.get('api_key') || null,
     identifier: formData.get('identifier') || null,
     password: formData.get('password') || null,
-    demo_mode: formData.get('demo_mode') === 'on',
   };
 
   const res = await fetch('/api/platforms', {

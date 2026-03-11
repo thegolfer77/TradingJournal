@@ -11,7 +11,7 @@ class PlatformCreate(BaseModel):
     api_key: Optional[str] = None
     identifier: Optional[str] = None
     password: Optional[str] = None
-    demo_mode: bool = True
+    demo_mode: bool = False
 
 
 class PlatformRead(BaseModel):
@@ -20,7 +20,6 @@ class PlatformRead(BaseModel):
     platform_type: str
     api_base_url: Optional[str]
     identifier: Optional[str]
-    demo_mode: bool
 
 
 class TradeRead(BaseModel):

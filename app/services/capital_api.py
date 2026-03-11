@@ -60,17 +60,13 @@ class CapitalComClient:
         api_key: str,
         identifier: str,
         password: str,
-        demo_mode: bool = True,
+        demo_mode: bool = False,
         base_url: str | None = None,
     ) -> None:
         self.api_key = api_key
         self.identifier = identifier
         self.password = password
-        self.base_url = base_url or (
-            "https://demo-api-capital.backend-capital.com/api/v1"
-            if demo_mode
-            else "https://api-capital.backend-capital.com/api/v1"
-        )
+        self.base_url = base_url or "https://api-capital.backend-capital.com/api/v1"
 
     @staticmethod
     def _map_http_error(exc: httpx.HTTPStatusError) -> CapitalAPIError:
@@ -129,7 +125,41 @@ class CapitalComClient:
         except httpx.HTTPStatusError:
             return None
 
-    async def fetch_closed_positions(self, limit: int = 200) -> list[dict[str, Any]]:
+    def _extract_rows(self, payload: Any) -> list[dict[str, Any]]:
+        rows: list[dict[str, Any]] = []
+
+        def walk(node: Any) -> None:
+            if isinstance(node, list):
+                for item in node:
+                    walk(item)
+                return
+            if not isinstance(node, dict):
+                return
+
+            looks_trade_like = any(
+                key in node
+                for key in (
+                    "position",
+                    "deal",
+                    "dealId",
+                    "dealReference",
+                    "transactionReference",
+                    "profitAndLoss",
+                    "profit",
+                    "pnl",
+                    "activityType",
+                )
+            )
+            if looks_trade_like:
+                rows.append(node)
+
+            for value in node.values():
+                walk(value)
+
+        walk(payload)
+        return rows
+
+    async def fetch_closed_positions(self, limit: int = 1000) -> list[dict[str, Any]]:
         headers = await self._auth_headers()
         try:
             sources: list[Any] = []
@@ -141,19 +171,29 @@ class CapitalComClient:
             sources.append(await self._try_get("/history", headers, {"limit": limit}))
             sources.append(await self._try_get("/history/activities", headers, {"limit": limit}))
 
-            positions: list[dict[str, Any]] = []
+            rows: list[dict[str, Any]] = []
             for payload in sources:
                 if not payload:
                     continue
-                if isinstance(payload, list):
-                    positions.extend(payload)
+                rows.extend(self._extract_rows(payload))
+
+            unique_rows: list[dict[str, Any]] = []
+            seen: set[str] = set()
+            for row in rows:
+                key = str(
+                    row.get("dealId")
+                    or row.get("dealReference")
+                    or row.get("transactionReference")
+                    or row.get("reference")
+                    or row.get("id")
+                    or repr(row)
+                )
+                if key in seen:
                     continue
-                if isinstance(payload, dict):
-                    for key in ("positions", "deals", "transactions", "activities", "history", "items", "nodes", "data"):
-                        val = payload.get(key)
-                        if isinstance(val, list):
-                            positions.extend(val)
-            return positions
+                seen.add(key)
+                unique_rows.append(row)
+
+            return unique_rows
         except httpx.HTTPStatusError as exc:
             raise self._map_http_error(exc) from exc
         except httpx.HTTPError as exc:
