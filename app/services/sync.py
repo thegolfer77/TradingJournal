@@ -5,6 +5,21 @@ from app.services.capital_api import CapitalComClient
 from app.services.normalize import normalize_capital_trades
 
 
+def _force_closed_rows(raw: list[dict]) -> list[dict]:
+    forced: list[dict] = []
+    for row in raw:
+        patched = dict(row)
+        patched.setdefault("status", "CLOSED")
+        position = patched.get("position")
+        if isinstance(position, dict):
+            pos = dict(position)
+            pos.setdefault("status", "CLOSED")
+            patched["position"] = pos
+        forced.append(patched)
+    return forced
+
+
+
 async def sync_platform_trades(session: Session, platform: PlatformConfig) -> tuple[int, int, int, int, dict[str, int]]:
     if platform.platform_type != "capital_com":
         return 0, 0, 0, 0, {}
@@ -23,6 +38,8 @@ async def sync_platform_trades(session: Session, platform: PlatformConfig) -> tu
 
     raw = await client.fetch_closed_positions()
     normalized = normalize_capital_trades(raw)
+    if len(raw) > 0 and len(normalized) == 0:
+        normalized = normalize_capital_trades(_force_closed_rows(raw))
 
     imported = 0
     skipped = 0

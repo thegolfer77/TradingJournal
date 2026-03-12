@@ -75,3 +75,8 @@ Hinweis: `closeLevel` allein zählt nicht mehr als geschlossener Trade (weil off
 ## UI wirkt unverändert?
 - Browser-Cache leeren / Hard-Refresh (`Cmd+Shift+R` oder `Ctrl+F5`).
 - Danach sollte im Titel `v2026.03-live` sichtbar sein.
+
+
+## Fallback-Strategie bei `fetched>0, normalized=0`
+Der Sync versucht in diesem Fall zusätzlich eine zweite Normalisierung mit erzwungenem Closed-Status,
+um Payload-Varianten von Capital.com zu erfassen, die keine klaren Closed-Marker liefern.
