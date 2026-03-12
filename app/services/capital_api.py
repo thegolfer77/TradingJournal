@@ -202,7 +202,10 @@ class CapitalComClient:
                 page_rows = await self._collect_paginated(path, headers, params)
                 key = path if "status" not in params else f"{path}?status={params['status']}"
                 source_counts[key] = source_counts.get(key, 0) + len(page_rows)
-                rows.extend(page_rows)
+                for row in page_rows:
+                    tagged = dict(row)
+                    tagged.setdefault("_source", key)
+                    rows.append(tagged)
 
             unique_rows: list[dict[str, Any]] = []
             seen: set[str] = set()

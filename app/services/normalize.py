@@ -67,6 +67,9 @@ def _fallback_trade_id(position: dict[str, Any], row: dict[str, Any], details: d
     return f"SYN-{digest}"
 
 def _is_closed(position: dict[str, Any], row: dict[str, Any]) -> bool:
+    source_hint = str(_pick(row, "_source") or "").lower()
+    if "status=closed" in source_hint:
+        return True
     status_value = str(
         _pick(position, "status")
         or _pick(row, "status", "dealStatus", "statusCode")

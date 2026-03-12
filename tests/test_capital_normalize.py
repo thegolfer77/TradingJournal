@@ -129,3 +129,21 @@ def test_normalize_capital_trades_generates_id_when_missing():
     result = normalize_capital_trades(raw)
     assert len(result) == 1
     assert result[0].trade_id.startswith("SYN-")
+
+
+def test_normalize_capital_trades_accepts_closed_source_hint():
+    raw = [
+        {
+            "_source": "/positions?status=CLOSED",
+            "symbol": "GBPUSD",
+            "direction": "SELL",
+            "size": "2",
+            "level": "1.255",
+            "profitAndLoss": "8.5",
+            "date": "2025-03-02T11:00:00Z",
+        }
+    ]
+
+    result = normalize_capital_trades(raw)
+    assert len(result) == 1
+    assert result[0].symbol == "GBPUSD"
