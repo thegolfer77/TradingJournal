@@ -1,0 +1,7 @@
+services:
+  tradingjournal:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./trading_journal.db:/app/trading_journal.db
